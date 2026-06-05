@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.10
+
+      - name: Sync dependencies
+        run: uv sync --dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      # Offline gate: unit tests + the eval smoke subset. `live` (real APIs) and
+      # `docker` (needs a daemon) are excluded by the default addopts, and the
+      # FULL eval over the owner's tasks is run manually, never in CI (§8).
+      - name: Test (offline gate + eval smoke)
+        run: uv run pytest

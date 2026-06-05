@@ -1,0 +1,19 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+build/
+dist/
+
+# NOTE: chroma_store/ is intentionally committed -- it's the minimal corpus baked
+# into the deploy image (built by scripts/bundle_corpus.py).

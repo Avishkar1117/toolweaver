@@ -1,0 +1,20 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agentic-tool-use:latest
+    container_name: agentic-tool-use
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env   # API keys only (DEEPSEEK / TAVILY / GEMINI)
+    # The image is self-contained: the corpus is baked in and code_exec is gated
+    # off via the Dockerfile (DOC_CHROMA_PATH, SANDBOX_ENABLED=false) -- the same
+    # config HF Spaces runs. To exercise code_exec live locally, uncomment below
+    # so the agent can reach the host Docker daemon and run the sandbox:
+    #   environment:
+    #     SANDBOX_ENABLED: "true"
+    #   volumes:
+    #     - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped

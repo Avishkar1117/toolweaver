@@ -1,0 +1,37 @@
+# Local virtualenv (rebuilt inside the container)
+.venv/
+venv/
+
+# Python bytecode + tool caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs (the minimal chroma_store IS baked in for managed hosting -- see Dockerfile)
+*.log
+
+# Secrets — passed via env_file at runtime, never baked into the image
+.env
+.env.*
+
+# Dev/eval files not needed at runtime
+tests/
+eval/
+.github/
+.vscode/
+.idea/
+
+# VCS
+.git/
+.gitignore
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+build/
+dist/

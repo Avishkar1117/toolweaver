@@ -1,0 +1,134 @@
+# P3 agent eval task set -- hand-authored and human-verified by the owner.
+#
+# 14 tasks: 9 gold (programmatic), 3 open (Gemini judge), 2 trajectory.
+# Tool coverage: calculator, web_search, doc_lookup, code_exec -- singly and
+# chained -- plus tasks where the agent must pick the tool itself.
+# doc_lookup tasks are grounded in the existing doc_eval_corpus (attention.pdf,
+# generic_agent.pdf) and verified against the actual chunk text.
+#
+# Schema (see graders.py for the grading logic):
+#   id             unique identifier
+#   question       handed to the agent verbatim
+#   type           gold | open | trajectory
+#   required_tool  tool name or [list]; checked against the trace (a list means
+#                  ALL listed tools must appear -- the chaining check)
+#   success        gold:  {mode: exact|numeric|substring|regex, expected, tolerance}
+#                  open:  {rubric: "<binary yes/no check for the judge>"}
+#                  trajectory: omit (using the required tool IS the criterion)
+
+# --- gold: single-tool ------------------------------------------------------
+
+- id: calc-multistep-arithmetic
+  question: "Use the calculator tool to compute (1250 + 345) * 12 - (4500 / 15). Provide just the final number."
+  type: gold
+  required_tool: calculator
+  success:
+    mode: numeric
+    expected: 18840
+    tolerance: 0
+
+- id: calc-percentages-powers
+  question: "Use the calculator tool to find 12.5% of 6400, then subtract 3 to the power of 4. Provide just the final number."
+  type: gold
+  required_tool: calculator
+  success:
+    mode: numeric
+    expected: 719
+    tolerance: 0
+
+- id: code-exec-sum-evens
+  question: "Write and execute Python code to find the sum of all even numbers from 1 to 1000 inclusive. What is the final sum?"
+  type: gold
+  required_tool: code_exec
+  success:
+    mode: numeric
+    expected: 250500
+    tolerance: 0
+
+- id: code-exec-string-manipulation
+  question: "Write and execute Python code that takes the string 'EvaluationAgent', converts it entirely to uppercase, reverses it, and prints the result. What is the exact string?"
+  type: gold
+  required_tool: code_exec
+  success:
+    mode: substring
+    expected: "TNEGANOITAULAVE"
+
+- id: web-search-settled-fact
+  question: "Use the web search tool to find the name of the ship that carried Charles Darwin on his famous voyage to the Galapagos Islands. What is the name of the ship?"
+  type: gold
+  required_tool: web_search
+  success:
+    mode: substring
+    expected: "Beagle"
+
+- id: doc-lookup-corpus-fact-string
+  question: "Search the document corpus to find the name of the optimizer used to train the base Transformer models. What is the optimizer's name?"
+  type: gold
+  required_tool: doc_lookup
+  success:
+    mode: substring
+    expected: "Adam"
+
+- id: doc-lookup-corpus-fact-numeric
+  question: "Search the GenericAgent document to find the size of its central Agent Loop. Exactly how many lines of code does it run on? Provide just the number."
+  type: gold
+  required_tool: doc_lookup
+  success:
+    mode: regex
+    expected: '\b92\b'      # word-bounded: dodges the "3,300 lines" distractor in the same chunk
+
+# --- gold: multi-tool & tool-selection --------------------------------------
+
+- id: chain-search-and-compute
+  question: "Find the year the Eiffel Tower opened and the year the Empire State Building opened. Then, use the calculator to find the exact difference in years between the two events."
+  type: gold
+  required_tool: [web_search, calculator]
+  success:
+    mode: numeric
+    expected: 42
+    tolerance: 0
+
+- id: selection-unprompted-calc
+  question: "A train travels 345 miles at a constant speed of 60 mph, and then travels another 210 miles at a constant speed of 70 mph. How many total minutes does the entire trip take?"
+  type: gold
+  required_tool: calculator
+  success:
+    mode: numeric
+    expected: 525
+    tolerance: 0
+
+- id: selection-unprompted-doc-calc
+  question: "Based on the GenericAgent paper in our corpus, if the central Agent Loop is executed exactly 500 times, how many total lines of code are processed in those loops? Provide just the exact calculated number."
+  type: gold
+  required_tool: [doc_lookup, calculator]
+  success:
+    mode: regex
+    expected: '\b46,?000\b'   # matches 46000 or 46,000; dodges the 92/500 inputs in the answer
+
+# --- open: Gemini judge -----------------------------------------------------
+
+- id: open-web-compare-explain
+  question: "Compare the underlying mechanisms of CRISPR-Cas9 and TALENs in gene editing. Briefly explain the primary difference in how they target DNA sequences."
+  type: open
+  required_tool: web_search
+  success:
+    rubric: "Does the answer correctly identify that CRISPR uses guide RNA (gRNA) for targeting, while TALENs rely on engineered proteins/amino acid motifs?"
+
+- id: open-doc-vs-web
+  question: "Search the document corpus for the BLEU score achieved by the 'Transformer (big)' model on the WMT 2014 English-to-French translation task. Then, use the web search tool to find the BLEU score of a more recent state-of-the-art model on that same WMT 2014 English-to-French task. Write a brief comparison."
+  type: open
+  required_tool: [doc_lookup, web_search]
+  success:
+    rubric: "Does the answer state the corpus figure of 41.0 BLEU for the Transformer model, identify at least one external current state-of-the-art figure from a web search, and explicitly compare them?"
+
+# --- trajectory: did it use the right tools? --------------------------------
+
+- id: trajectory-live-compute
+  question: "Find the current stock prices for Apple (AAPL) and Microsoft (MSFT), then calculate the ratio of Apple's price to Microsoft's price."
+  type: trajectory
+  required_tool: [web_search, calculator]
+
+- id: trajectory-data-gather-and-code
+  question: "Search for the current populations of the 5 largest cities in Japan. Then, write and execute a Python script to calculate the standard deviation of these 5 population numbers."
+  type: trajectory
+  required_tool: [web_search, code_exec]
