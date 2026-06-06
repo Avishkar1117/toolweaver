@@ -6,7 +6,7 @@ colorTo: purple
 sdk: docker
 app_port: 8000
 pinned: false
-short_description: A LangGraph agent that plans, picks tools, and shows its trace
+short_description: LangGraph agent that plans, picks tools, shows its trace
 ---
 
 # Agentic Tool-Use Agent
