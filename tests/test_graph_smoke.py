@@ -54,6 +54,16 @@ def test_graph_runs_end_to_end(fake_planner):
     assert state["done"] is True
 
 
+def test_root_serves_demo_page():
+    # GET / returns the self-contained HTML demo (no planner needed) -- this is
+    # what HF embeds in the Space iframe; without it the root is a bare 404.
+    client = TestClient(app)
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+    assert "Agentic Tool-Use Agent" in resp.text
+
+
 def test_ask_endpoint(fake_planner):
     client = TestClient(app)
     resp = client.post("/ask", json={"question": "What is 40 + 2?"})

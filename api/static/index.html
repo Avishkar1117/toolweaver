@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic Tool-Use Agent</title>
+<style>
+  :root { --card:#fff; --ink:#1a1f36; --muted:#6b7280; --accent:#6d5efc; --line:#e5e7eb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: linear-gradient(160deg,#1a1f3a,#0f1220); color:var(--ink);
+         min-height:100vh; display:flex; justify-content:center; padding:32px 16px; }
+  .wrap { width:100%; max-width:760px; }
+  .card { background:var(--card); border-radius:16px; padding:28px; box-shadow:0 12px 40px rgba(0,0,0,.35); }
+  h1 { margin:0 0 4px; font-size:1.5rem; }
+  .tag { color:var(--muted); margin:0 0 18px; font-size:.95rem; }
+  .row { display:flex; gap:8px; }
+  input[type=text] { flex:1; padding:12px 14px; border:1px solid var(--line); border-radius:10px; font-size:1rem; }
+  button { padding:12px 18px; border:0; border-radius:10px; background:var(--accent); color:#fff;
+           font-size:1rem; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:default; }
+  .examples { margin:12px 0 0; display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { font-size:.82rem; color:var(--accent); background:#f3f1ff; border:1px solid #e3def9;
+          padding:6px 10px; border-radius:999px; cursor:pointer; }
+  .out { margin-top:22px; display:none; }
+  .label { font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 6px; }
+  .answer { background:#fbfbfd; border:1px solid var(--line); border-radius:10px; padding:14px 16px; line-height:1.55; }
+  .answer pre { background:#0f1220; color:#e6e6f0; padding:12px; border-radius:8px; overflow:auto; }
+  .answer code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.9em; }
+  .trace { margin-top:14px; font-size:.88rem; color:var(--muted); }
+  .pill { display:inline-block; background:#eef2ff; color:#3b4cca; border-radius:6px; padding:2px 8px; margin:2px 4px 2px 0; font-size:.8rem; }
+  .pill.warn { background:#fff3cd; color:#8a6d3b; }
+  .spin { display:none; margin-top:18px; color:var(--muted); font-size:.9rem; }
+  a { color:var(--accent); }
+  .foot { margin-top:18px; font-size:.8rem; color:var(--muted); line-height:1.5; }
+</style>
+</head>
+<body>
+  <div class="wrap"><div class="card">
+    <h1>&#129302; Agentic Tool-Use Agent</h1>
+    <p class="tag">Ask a question &mdash; the agent plans, picks tools, and shows its reasoning trace.</p>
+    <div class="row">
+      <input id="q" type="text" placeholder="e.g. What optimizer trained the base Transformer models?" />
+      <button id="go">Ask</button>
+    </div>
+    <div class="examples" id="ex"></div>
+    <div class="spin" id="spin">&#9203; Running the agent&hellip; (first call after idle can take ~30s)</div>
+    <div class="out" id="out">
+      <p class="label">Answer</p>
+      <div class="answer" id="answer"></div>
+      <div class="trace" id="trace"></div>
+    </div>
+    <p class="foot">Tools: web_search &middot; calculator &middot; doc_lookup (over MCP) &middot; code_exec.
+      <b>code_exec</b> is gated on this hosted demo &mdash; it runs live in the local/self-hosted
+      deployment. Raw API at <a href="/docs">/docs</a>.</p>
+  </div></div>
+<script>
+const examples = [
+  "What optimizer trained the base Transformer models?",
+  "A train travels 358 km in 540 minutes. What is its average speed in km/h?",
+  "Who won the 2022 FIFA World Cup?"
+];
+const exDiv = document.getElementById('ex');
+examples.forEach(function(e){
+  const c = document.createElement('span'); c.className = 'chip'; c.textContent = e;
+  c.onclick = function(){ document.getElementById('q').value = e; ask(); };
+  exDiv.appendChild(c);
+});
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function md(s){
+  s = esc(s);
+  const blocks = [];
+  s = s.replace(/```[a-zA-Z]*\n?([\s\S]*?)```/g, function(_, c){ blocks.push(c); return '@@CB' + (blocks.length - 1) + '@@'; });
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\n/g, '<br>');
+  s = s.replace(/@@CB(\d+)@@/g, function(_, i){ return '<pre><code>' + blocks[+i] + '</code></pre>'; });
+  return s;
+}
+async function ask(){
+  const q = document.getElementById('q').value.trim();
+  if(!q) return;
+  const go = document.getElementById('go');
+  go.disabled = true;
+  document.getElementById('spin').style.display = 'block';
+  document.getElementById('out').style.display = 'none';
+  try {
+    const r = await fetch('/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({question:q})});
+    const b = await r.json();
+    document.getElementById('answer').innerHTML = md(b.answer || '(no answer)');
+    const t = b.trace || {};
+    const tools = (t.observations || []).map(function(o){ return o.tool; });
+    const pills = tools.length ? tools.map(function(x){ return '<span class="pill">' + esc(x) + '</span>'; }).join('') : '<span class="pill">none</span>';
+    const conv = t.did_not_converge ? '<span class="pill warn">did not converge</span>' : '';
+    document.getElementById('trace').innerHTML = '<strong>trace:</strong> ' + pills + ' &nbsp;&middot;&nbsp; ' + (t.step_count || 0) + ' step(s) ' + conv;
+    document.getElementById('out').style.display = 'block';
+  } catch(e) {
+    document.getElementById('answer').textContent = 'Request failed: ' + e;
+    document.getElementById('out').style.display = 'block';
+  } finally {
+    go.disabled = false;
+    document.getElementById('spin').style.display = 'none';
+  }
+}
+document.getElementById('go').onclick = ask;
+document.getElementById('q').addEventListener('keydown', function(e){ if(e.key === 'Enter') ask(); });
+</script>
+</body>
+</html>
