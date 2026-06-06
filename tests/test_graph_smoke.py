@@ -61,7 +61,7 @@ def test_root_serves_demo_page():
     resp = client.get("/")
     assert resp.status_code == 200
     assert "text/html" in resp.headers["content-type"]
-    assert "Agentic Tool-Use Agent" in resp.text
+    assert "Toolweaver" in resp.text
 
 
 def test_ask_endpoint(fake_planner):

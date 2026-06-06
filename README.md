@@ -1,5 +1,5 @@
 ---
-title: Agentic Tool-Use Agent
+title: Toolweaver
 emoji: "\U0001F916"
 colorFrom: indigo
 colorTo: purple
@@ -9,7 +9,7 @@ pinned: false
 short_description: LangGraph agent that plans, picks tools, shows its trace
 ---
 
-# Agentic Tool-Use Agent
+# Toolweaver
 
 A LangGraph agent that takes a question, **plans, selects and chains tools,
 observes the results, and loops until confident** — then returns a final answer

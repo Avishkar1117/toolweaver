@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agentic Tool-Use Agent</title>
+<title>Toolweaver</title>
 <style>
   :root { --card:#fff; --ink:#1a1f36; --muted:#6b7280; --accent:#6d5efc; --line:#e5e7eb; }
   * { box-sizing: border-box; }
@@ -37,8 +37,8 @@
 </head>
 <body>
   <div class="wrap"><div class="card">
-    <h1>&#129302; Agentic Tool-Use Agent</h1>
-    <p class="tag">Ask a question &mdash; the agent plans, picks tools, and shows its reasoning trace.</p>
+    <h1>&#129302; Toolweaver</h1>
+    <p class="tag">Ask a question. The agent plans, picks tools, and shows its reasoning trace.</p>
     <div class="row">
       <input id="q" type="text" placeholder="e.g. What optimizer trained the base Transformer models?" />
       <button id="go">Ask</button>
@@ -51,7 +51,7 @@
       <div class="trace" id="trace"></div>
     </div>
     <p class="foot">Tools: web_search &middot; calculator &middot; doc_lookup (over MCP) &middot; code_exec.
-      <b>code_exec</b> is gated on this hosted demo &mdash; it runs live in the local/self-hosted
+      <b>code_exec</b> is gated on this hosted demo; it runs live in the local/self-hosted
       deployment. Raw API at <a href="/docs">/docs</a>.</p>
   </div></div>
 <script>
