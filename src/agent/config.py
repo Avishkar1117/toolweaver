@@ -39,9 +39,10 @@ class Settings(BaseSettings):
     doc_top_k: int = 4
 
     # LLM judge for open-ended eval tasks (CLAUDE.md §8). A DIFFERENT model family
-    # from the DeepSeek agent -- reuse the Gemini integration. A generation model,
-    # distinct from the embedding model above; swappable via env.
-    judge_model: str = "gemini-2.0-flash"
+    # from the DeepSeek agent (reuse the Gemini integration); a generation model,
+    # distinct from the embedding model above, swappable via env. Was gemini-2.0-
+    # flash until Google zeroed its free-tier quota; 2.5-flash still has free quota.
+    judge_model: str = "gemini-2.5-flash"
 
     # code_exec sandbox (CLAUDE.md §5). Image is built from
     # docker/sandbox.Dockerfile; the rest are the per-run resource guards.

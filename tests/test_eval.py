@@ -49,6 +49,21 @@ def test_gold_numeric_tolerance_and_separators():
     assert not grade_gold(t2, "about 2.6")[0]
 
 
+def test_gold_numeric_reads_final_number_not_first():
+    # The agent narrates inputs before stating the result; the grader must read
+    # the concluding number, not the first one (which would be a distractor).
+    t = Task(
+        id="x",
+        question="q",
+        type="gold",
+        success={"mode": "numeric", "expected": 42, "tolerance": 0},
+    )
+    assert grade_gold(t, "Opened in 1889 and 1931, a difference of 42 years.")[0]
+    # ...but it is not "any number present": a wrong conclusion still fails even
+    # if the right value appeared earlier in the reasoning.
+    assert not grade_gold(t, "the difference is 42, but actually I get 50")[0]
+
+
 # --- trajectory grader ------------------------------------------------------
 
 

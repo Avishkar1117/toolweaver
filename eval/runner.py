@@ -83,10 +83,11 @@ def main() -> None:
     if not tasks:
         raise SystemExit(f"no tasks in {args.tasks} -- the owner fills tasks.yaml (CLAUDE.md §8)")
 
-    from .report import format_report
+    from .report import format_report, format_task_breakdown
 
     records = run_suite(tasks, n=args.runs)
     print(format_report(records))
+    print(format_task_breakdown(records))
 
 
 if __name__ == "__main__":

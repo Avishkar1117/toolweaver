@@ -73,12 +73,21 @@ def grade_gold(task: Task, answer: str | None) -> tuple[bool, str]:
 
 
 def _numeric_match(answer: str, expected: str, tolerance: float) -> bool:
-    """Pull the first number from the answer (the model may wrap it in prose or
-    add thousands separators) and compare within tolerance."""
+    """Compare the answer's final number against expected within tolerance.
+
+    The agent states its result at the END, after narrating its work and echoing
+    inputs: "...opened in 1889 and 1931, a difference of 42." Reading the FIRST
+    number grabs those distractors (1889) and scores a correct answer wrong, so
+    take the LAST number -- the concluding value. (Thousands separators are
+    stripped; the model often adds them -- see memory.)
+
+    We deliberately do NOT pick the number closest to ``expected``: that would
+    pass any answer merely containing the value, i.e. grade to the answer key.
+    Last-number still fails an answer that concludes wrongly."""
     nums = re.findall(r"-?\d[\d,]*\.?\d*", answer)
     if not nums:
         return False
-    got = float(nums[0].replace(",", ""))
+    got = float(nums[-1].replace(",", ""))
     return abs(got - float(expected)) <= tolerance
 
 
@@ -92,7 +101,13 @@ def grade_open(task: Task, answer: str | None) -> tuple[bool, str]:
     rubric = task.success.get("rubric")
     if not rubric:
         raise ValueError(f"open task {task.id!r} has no success.rubric")
-    verdict = _judge(task.question, answer or "", rubric)
+    try:
+        verdict = _judge(task.question, answer or "", rubric)
+    except Exception as e:
+        # A judge outage (e.g. a 429 quota error) must not abort the whole suite
+        # and discard every completed run. Degrade to a clear, greppable non-pass
+        # so the report still prints (CLAUDE.md §8: the eval must be robust).
+        return False, f"open judge UNAVAILABLE ({type(e).__name__}): {str(e)[:120]}"
     return verdict, f"open judge verdict={verdict} rubric={rubric!r}"
 
 
