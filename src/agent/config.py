@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     doc_chroma_path: str = str(_REPO_ROOT.parent / "rag-service" / "chroma_store")
     doc_collection: str = "doc_eval_corpus"
     doc_top_k: int = 4
+    # doc_lookup runs over MCP and embeds the query with Gemini; that network
+    # round-trip has no implicit timeout, so one stalled call would block the
+    # whole run forever (this hung a 224-run eval). Bound it: on timeout the tool
+    # raises and call_tool turns it into an ok=False observation (CLAUDE.md §3).
+    # Generous, to clear the per-call subprocess cold start (chromadb + genai
+    # import) without false timeouts.
+    doc_lookup_timeout: int = 45
 
     # LLM judge for open-ended eval tasks (CLAUDE.md §8). A DIFFERENT model family
     # from the DeepSeek agent (reuse the Gemini integration); a generation model,

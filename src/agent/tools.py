@@ -136,6 +136,7 @@ def _mcp_doc_lookup(query: str) -> str:
 
 
 async def _mcp_doc_lookup_async(query: str) -> str:
+    import asyncio
     import os
     import sys
 
@@ -150,12 +151,20 @@ async def _mcp_doc_lookup_async(query: str) -> str:
     params = StdioServerParameters(
         command=sys.executable, args=["-m", "agent.mcp_server"], env=dict(os.environ)
     )
-    async with stdio_client(params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            result = await session.call_tool("doc_lookup", {"query": query})
-            parts = [c.text for c in result.content if getattr(c, "type", None) == "text"]
-            return "\n\n".join(parts)
+
+    async def _call() -> str:
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool("doc_lookup", {"query": query})
+                parts = [c.text for c in result.content if getattr(c, "type", None) == "text"]
+                return "\n\n".join(parts)
+
+    # Bound the whole MCP round-trip. A stalled embedding/query inside the server
+    # has no network timeout on this path and would otherwise hang forever; on
+    # timeout we raise so call_tool degrades it to an ok=False observation
+    # (CLAUDE.md §3) and the run continues instead of freezing.
+    return await asyncio.wait_for(_call(), timeout=settings.doc_lookup_timeout)
 
 
 class DocLookupTool:
