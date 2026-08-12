@@ -81,10 +81,23 @@ def _numeric_match(answer: str, expected: str, tolerance: float) -> bool:
     take the LAST number -- the concluding value. (Thousands separators are
     stripped; the model often adds them -- see memory.)
 
+    That still misreads answers that restate the result in another unit AFTER
+    the concluding line, e.g. "...= **525 minutes** (8 hours 45 minutes)." --
+    the last number in the whole text is 45, not 525. The model consistently
+    bolds its actual conclusion and leaves distractors/restatements unbolded, so
+    prefer the last number found INSIDE a bolded span when the answer has any
+    bolding, falling back to the last number in the text otherwise (e.g. tasks
+    that ask for a bare number). Read the last number WITHIN each bold span, not
+    the first: the model sometimes bolds a whole expression, e.g.
+    "**1931 - 1889 = 42 years**", where the answer (42) comes after the inputs.
+
     We deliberately do NOT pick the number closest to ``expected``: that would
     pass any answer merely containing the value, i.e. grade to the answer key.
     Last-number still fails an answer that concludes wrongly."""
-    nums = re.findall(r"-?\d[\d,]*\.?\d*", answer)
+    num_re = r"-?\d[\d,]*\.?\d*"
+    bold_spans = re.findall(r"\*\*(.*?)\*\*", answer)
+    bolded = [m[-1] for span in bold_spans if (m := re.findall(num_re, span))]
+    nums = bolded or re.findall(num_re, answer)
     if not nums:
         return False
     got = float(nums[-1].replace(",", ""))
