@@ -12,7 +12,7 @@ short_description: LangGraph agent that plans, picks tools, shows its trace
 # Toolweaver
 
 A LangGraph agent that takes a question, **plans, selects and chains tools,
-observes the results, and loops until confident** — then returns a final answer
+observes the results, and loops until confident**, then returns a final answer
 plus a full reasoning trace. Served behind a thin FastAPI `/ask` endpoint and
 evaluated over a hand-designed task set.
 
@@ -38,9 +38,9 @@ curl -X POST https://avishkar1117-agentic-tool-use.hf.space/ask \
 `plan → call_tool → observe → decide → (loop | answer)`, a LangGraph state
 machine. Two hard guards keep it honest:
 
-- **Step cap** — a max-steps limit; on exceeding it the agent returns a
+- **Step cap**: a max-steps limit; on exceeding it the agent returns a
   best-effort answer flagged `did_not_converge` instead of looping forever.
-- **Tool failure as observation** — every tool call is wrapped; a failure is fed
+- **Tool failure as observation**: every tool call is wrapped; a failure is fed
   back as an observation so the agent can retry, switch tools, or answer around
   it. The graph never crashes on a tool error.
 
@@ -50,15 +50,15 @@ machine. Two hard guards keep it honest:
 |---|---|
 | `calculator` | Safe arithmetic (AST-evaluated, no `eval`). |
 | `web_search` | External search via Tavily. |
-| `doc_lookup` | Retrieves from a local document corpus — exposed over **MCP** (the agent is the MCP client; the server owns the Chroma + Gemini access). |
+| `doc_lookup` | Retrieves from a local document corpus, exposed over **MCP** (the agent is the MCP client; the server owns the Chroma + Gemini access). |
 | `code_exec` | Runs model-generated Python in an isolated Docker sandbox (`--network none`, non-root, resource + wall-clock limits). |
 
-### Hosted vs local — one image, two modes
+### Hosted vs local: one image, two modes
 
 `code_exec` needs the host Docker daemon to spawn its sandbox, which managed
 hosting can't provide. So the **same image** runs two ways:
 
-- **Hosted (HF Spaces):** `SANDBOX_ENABLED=false` — 3 tools live; `code_exec`
+- **Hosted (HF Spaces):** `SANDBOX_ENABLED=false`, 3 tools live; `code_exec`
   returns a clean message and the agent answers around it.
 - **Local (`docker compose`, socket mounted, `SANDBOX_ENABLED=true`):** all 4
   tools live.
@@ -66,7 +66,7 @@ hosting can't provide. So the **same image** runs two ways:
 ## Evaluation
 
 `eval/` runs the graph in-process (no HTTP), N times per task, and grades with
-three graders: **gold** (programmatic), **LLM judge** (Gemini — a different model
+three graders: **gold** (programmatic), **LLM judge** (Gemini, a different model
 family from the DeepSeek agent), and **trajectory** (did the required tool appear
 in the trace?). The headline metric is the **per-prompting-strategy delta** over
 the same task set. A 3–4 task smoke subset is the CI gate; the full eval is a
