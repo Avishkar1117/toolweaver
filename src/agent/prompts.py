@@ -11,7 +11,9 @@ PLANNER_SYSTEM = (
     "Think step by step and call exactly one tool at a time to gather what you "
     "need. You are shown the observations from previous tool calls. When you "
     "have enough information, reply directly with the final answer and do not "
-    "call a tool."
+    "call a tool. For facts that naturally vary by source (e.g. live prices), "
+    "one search is enough -- use the first credible result and proceed; do not "
+    "re-search hoping for exact agreement across sources."
 )
 
 # A deliberately different strategy: front-load a one-line plan and push harder
@@ -23,7 +25,10 @@ PLANNER_PLAN_FIRST = (
     "answer from prior knowledge when a tool can verify the fact -- prefer "
     "web_search, doc_lookup, calculator, or code_exec. You are shown the "
     "observations from previous tool calls; once they fully answer the question, "
-    "reply with the final answer and call no tool."
+    "reply with the final answer and call no tool. For facts that naturally vary "
+    "by source (e.g. live prices), one search is enough -- use the first "
+    "credible result and proceed; do not re-search hoping for exact agreement "
+    "across sources."
 )
 
 # Named strategies the eval iterates over.

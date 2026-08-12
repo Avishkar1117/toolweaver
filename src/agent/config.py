@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     embedding_model: str = "models/gemini-embedding-001"
     doc_chroma_path: str = str(_REPO_ROOT.parent / "rag-service" / "chroma_store")
     doc_collection: str = "doc_eval_corpus"
-    doc_top_k: int = 4
+    doc_top_k: int = 6
     # doc_lookup runs over MCP and embeds the query with Gemini; that network
     # round-trip has no implicit timeout, so one stalled call would block the
     # whole run forever (this hung a 224-run eval). Bound it: on timeout the tool
@@ -48,8 +48,11 @@ class Settings(BaseSettings):
     # LLM judge for open-ended eval tasks (CLAUDE.md §8). A DIFFERENT model family
     # from the DeepSeek agent (reuse the Gemini integration); a generation model,
     # distinct from the embedding model above, swappable via env. Was gemini-2.0-
-    # flash until Google zeroed its free-tier quota; 2.5-flash still has free quota.
-    judge_model: str = "gemini-2.5-flash"
+    # flash until Google zeroed its free-tier quota, then gemini-2.5-flash whose
+    # free tier caps generateContent at 20 requests/DAY (too tight for eval
+    # reruns -- see judge quota gotcha in project memory); moved to a fresh quota
+    # bucket on 3.1-flash-lite (same "cheap/fast" tier, plenty for a binary judge).
+    judge_model: str = "gemini-3.1-flash-lite"
 
     # code_exec sandbox (CLAUDE.md §5). Image is built from
     # docker/sandbox.Dockerfile; the rest are the per-run resource guards.

@@ -25,8 +25,11 @@ mcp = FastMCP("doc-lookup")
 # Total chars of retrieved text to hand back per lookup. This corpus is chunked
 # by whole PDF page (~3k chars each), so a *per-chunk* head-cap would truncate
 # answers that sit mid-page; a single total budget keeps context bounded (§13)
-# while letting the most-relevant page come through whole.
-_SNIPPET_BUDGET = 6000
+# while letting the most-relevant page come through whole. Sized to fit all
+# doc_top_k=6 pages (~3.5k chars each worst case) -- a smaller budget silently
+# dropped lower-ranked chunks even though Chroma had already retrieved them,
+# which lost facts that don't happen to rank in the top 2.
+_SNIPPET_BUDGET = 21000
 
 _collection: Any = None
 
